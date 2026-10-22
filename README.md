@@ -17,14 +17,15 @@ OpenCode has no public rate-limit or billing API, so the limits and balance sect
 
 ## Installation
 
-### Option A — Place the collector on PATH (recommended)
+### Install the collector
 
 ```bash
-sudo cp omarchy-agent-usage-opencode /usr/bin/
-sudo chmod +x /usr/bin/omarchy-agent-usage-opencode
+# Place the collector on PATH (already done — it's in ~/.local/bin/)
+cp omarchy-agent-usage-opencode ~/.local/bin/
+chmod +x ~/.local/bin/omarchy-agent-usage-opencode
 ```
 
-Then copy the icon assets into your cloned agents plugin:
+### Add icons to your cloned agents plugin
 
 ```bash
 PLUGIN_DIR="$HOME/.config/omarchy/plugins/wealth.agents"
@@ -33,16 +34,34 @@ cp assets/opencode.svg "$PLUGIN_DIR/assets/"
 cp assets/opencode-light.svg "$PLUGIN_DIR/assets/"
 ```
 
-Finally, ensure the cloned plugin is enabled (it should be by default after cloning):
+### Generate initial state
 
 ```bash
-omarchy plugin enable wealth.agents
+~/.local/bin/omarchy-agent-usage-opencode --force > ~/.local/state/omarchy/agents/usage/opencode.json
+```
+
+### Restart the shell
+
+```bash
 omarchy restart shell
 ```
 
-### Option B — Custom location
+### Note on auto-refresh
 
-If you prefer not to install to `/usr/bin/`, place the script anywhere on `PATH` and name it `omarchy-agent-usage-opencode`. The update orchestrator (`omarchy-agent-usage-update`) discovers any executable matching that pattern.
+The `omarchy-agent-usage-update` orchestrator only scans `/usr/share/omarchy/bin/` for collectors, so it won't auto-run the OpenCode collector on its 15-minute timer. To refresh manually, run:
+
+```bash
+~/.local/bin/omarchy-agent-usage-opencode --force > ~/.local/state/omarchy/agents/usage/opencode.json
+```
+
+Or open the agents panel and press `r` (shows cached data; the panel timer doesn't re-scan Opencode automatically).
+
+To install system-wide (so the orchestrator picks it up):
+
+```bash
+sudo cp omarchy-agent-usage-opencode /usr/share/omarchy/bin/
+sudo chmod +x /usr/share/omarchy/bin/omarchy-agent-usage-opencode
+```
 
 ## How it works
 
@@ -53,18 +72,18 @@ If you prefer not to install to `/usr/bin/`, place the script anywhere on `PATH`
 
 ## CLI flags
 
-| Flag | Description |
-|---|---|
 | `--force` | Invalidate cache and re-scan the full database |
 | `--limits-only` | Reuse recent scan results (no limits to fetch for OpenCode) |
 | `--cache-seconds N` | Override cache freshness window (default: 20) |
+
+The `omarchy-agent-usage-update` orchestrator only scans `/usr/share/omarchy/bin/`, so user-installed collectors are not auto-discovered. Install to `/usr/share/omarchy/bin/` with `sudo` for full auto-refresh integration, or refresh manually with `~/.local/bin/omarchy-agent-usage-opencode --force`.
 
 ## Icon
 
 Two SVG variants are provided so the mark looks good on both dark and light bar themes:
 
-- `assets/opencode.svg` — light-colored mark for dark surfaces
-- `assets/opencode-light.svg` — dark-colored mark for light surfaces
+- `assets/opencode.svg` — dark background, white mark (for light bar surfaces)
+- `assets/opencode-light.svg` — light background, dark mark (for dark bar surfaces)
 
 Both are based on OpenCode's brand geometry (the interlocking "OC" spiral) and use a transparent background.
 
