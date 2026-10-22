@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" preserveAspectRatio="xMidYMid meet">
+  <!-- OpenCode icon — light variant. Uses deeper tones so the mark reads on
+       light bar surfaces. Transparent background. -->
+  <defs>
+    <linearGradient id="oc-grad-light" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2828"/>
+      <stop offset="100%" stop-color="#4a4646"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer frame — the "O" shell -->
+  <rect x="32" y="32" width="192" height="192" rx="32" ry="32"
+        fill="none" stroke="url(#oc-grad-light)" stroke-width="24"
+        stroke-linejoin="round"/>
+  <!-- Inner cutout — the negative-space spiral arm -->
+  <path d="M128 72
+           L184 72
+           L184 128
+           L128 128
+           L128 184
+           L72 184
+           L72 128
+           L128 128
+           L128 72 Z"
+        fill="url(#oc-grad-light)" stroke="none"/>
+  <!-- Accent dot — top-right corner node -->
+  <circle cx="184" cy="72" r="8" fill="#2a2828"/>
+</svg>

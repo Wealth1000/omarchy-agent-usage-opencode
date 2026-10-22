@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.json
+*.lock
+*.db
+.local/
+.cache/
+.state/
+node_modules/
