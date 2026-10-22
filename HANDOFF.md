@@ -1,66 +1,61 @@
-# HANDOFF — Session Summary
+## HANDOFF — Session Summary
 
 ## What was done
 
 Created `omarchy-agent-usage-opencode`: a collector script that adds **OpenCode** as a first-class agent in the Omarchy taskbar AI agents panel.
 
-### Files created
+### Files in the repo
 
 | File | Purpose |
 |---|---|
-| `omarchy-agent-usage-opencode` | Python 3 collector script (install to `~/.local/bin/`) |
-| `assets/opencode.svg` | Dark-themed icon for the agents panel hero |
-| `assets/opencode-light.svg` | Light-themed icon variant for light bar surfaces |
+| `omarchy-agent-usage-opencode` | Python 3 collector script |
+| `assets/opencode.svg` | Official OpenCode logo (dark bg, white mark) |
+| `assets/opencode-light.svg` | Official OpenCode logo (light bg, dark mark) |
 | `README.md` | Installation & usage docs |
 | `LICENSE` | MIT license |
 | `SPEC.md` | Feature specification |
 | `HANDOFF.md` | This file |
 
-### Files modified on the system
+### Files installed on your machine
 
-| File | Change |
+| File | Purpose |
 |---|---|
-| `~/.local/bin/omarchy-agent-usage-opencode` | Installed collector (symlink from project) |
-| `~/.config/omarchy/plugins/wealth.agents/assets/opencode.svg` | Branded icon |
-| `~/.config/omarchy/plugins/wealth.agents/assets/opencode-light.svg` | Light theme icon |
-| `~/.config/omarchy/hooks/post-boot.d/opencode-usage` | Runs collector on shell start to keep stats fresh |
-| `~/.local/state/omarchy/agents/usage/opencode.json` | Generated usage record (auto-refreshed by hook + panel timer) |
+| `~/.local/bin/omarchy-agent-usage-opencode` | Collector script (on PATH) |
+| `~/.config/omarchy/plugins/wealth.agents/assets/opencode.svg` | Dark icon for light bar surfaces |
+| `~/.config/omarchy/plugins/wealth.agents/assets/opencode-light.svg` | Light icon for dark bar surfaces |
+| `~/.config/omarchy/hooks/post-boot.d/opencode-usage` | Runs collector on shell start |
+| `~/.local/state/omarchy/agents/usage/opencode.json` | Generated usage record |
 
 ### How it works
 
-1. The collector reads OpenCode's SQLite database (`~/.local/share/opencode/opencode.db`) in read-only mode.
-2. It scans `session_message` for rows with token usage data, aggregates by date/model, and prints a JSON record.
-3. The record is cached in `~/.cache/omarchy/agent-usage/` for 20 seconds.
-4. The agents panel (via `Main.qml`) auto-discovers `opencode.json` in the usage directory — no config changes needed.
-5. A post-boot hook refreshes the stats when the shell starts.
-6. The panel timer (every 900s by default) re-runs the update orchestrator; since our collector lives in `~/.local/bin/` rather than `/usr/share/omarchy/bin/`, the orchestrator won't auto-discover it — the hook ensures fresh data on login.
+1. Collector reads `~/.local/share/opencode/opencode.db` (read-only) and scans `session_message` for token usage.
+2. Aggregates by date and model, prints JSON record to stdout.
+3. Results cached in `~/.cache/omarchy/agent-usage/` for 20 seconds.
+4. State file written to `~/.local/state/omarchy/agents/usage/opencode.json`.
+5. Agents panel auto-discovers the record — no config changes needed.
+6. Post-boot hook refreshes stats when the shell starts.
 
 ### User experience
 
-- Middle-click the AI agent icon in the taskbar to cycle between Claude, Codex, Fireworks, and **OpenCode**.
-- Click to open the panel: the OpenCode tab shows today's prompts/sessions, a 7-day token chart, and an all-time per-model breakdown.
-- No rate-limit or balance section appears (OpenCode has no billing API).
-- The branded OpenCode icon replaces the generic `󱚣` glyph in the panel hero.
+- Middle-click the AI agent icon to cycle between Claude, Codex, Fireworks, and **OpenCode**.
+- Click to open the panel: OpenCode tab shows today's prompts/sessions, 7-day chart, per-model breakdown.
+- No rate-limit or balance section (OpenCode has no billing API).
+- Official OpenCode logo used instead of generic glyph.
+
+### Refresh
+
+The orchestrator (`omarchy-agent-usage-update`) only scans `/usr/share/omarchy/bin/`, so it won't auto-run this collector on its 15-min timer. Options:
+
+```bash
+# Manual refresh:
+~/.local/bin/omarchy-agent-usage-opencode --force > ~/.local/state/omarchy/agents/usage/opencode.json
+
+# System-wide install (for orchestrator discovery):
+sudo cp ~/.local/bin/omarchy-agent-usage-opencode /usr/share/omarchy/bin/
+sudo chmod +x /usr/share/omarchy/bin/omarchy-agent-usage-opencode
+```
 
 ### Known limitation
 
-The `omarchy-agent-usage-update` orchestrator only scans `/usr/share/omarchy/bin/` for collectors, so it won't auto-run the OpenCode collector on its 15-minute timer. The post-boot hook covers login-time refresh. For on-demand refresh, run:
+SQLite database lock contention when opencode is actively writing. The collector uses `mode=ro` with a 2-second timeout and returns empty stats on lock. The 20-second cache means subsequent reads are fast. If you see empty stats, wait a moment and refresh.
 
-```bash
-~/.local/bin/omarchy-agent-usage-opencode --force
-```
-
-Or open the agents panel and press `r` (the panel triggers a refresh which calls the orchestrator — but the orchestrator won't find our collector, so this only refreshes the other agents. Use the command above for OpenCode-specific refresh).
-
-## Next steps / what to do next
-
-1. **Restart the shell** (already done via `omarchy restart shell`).
-2. **Verify** the OpenCode tab appears in the agents panel.
-3. **Push to GitHub** — initialize the repo, add a `.gitignore`, commit, and push public.
-4. **Optional**: Copy the collector to `/usr/bin/` with `sudo cp` for system-wide availability (so the orchestrator picks it up on its timer).
-
-## Notes
-
-- The script handles SQLite locks gracefully: if opencode is writing when the collector runs, it returns empty stats and relies on the cache. Subsequent runs (after the lock releases) will populate correctly.
-- Token counts include reasoning tokens folded into output (matching Claude collector convention).
-- Model IDs come from `$.model.id` in the DB (e.g., `agnes-2.5-flash`, `big-pickle`).

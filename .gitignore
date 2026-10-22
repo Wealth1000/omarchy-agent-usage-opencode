@@ -8,3 +8,5 @@ __pycache__/
 .cache/
 .state/
 node_modules/
+assets/opencode-brand-assets/
+assets/__MACOSX/
